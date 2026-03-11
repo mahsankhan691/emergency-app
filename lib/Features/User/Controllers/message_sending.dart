@@ -9,6 +9,8 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
+
 import '../../Emergency Contacts/emergency_contacts_controller.dart';
 
 class messageController extends GetxController {
@@ -91,6 +93,10 @@ class messageController extends GetxController {
   }
 
   handleSmsPermission() async {
+    if (kIsWeb) {
+      debugPrint("SMS Permission skipped on Web");
+      return true;
+    }
     final status = await Permission.sms.request();
     if (status.isGranted) {
       debugPrint("SMS Permission Granted");
@@ -171,8 +177,11 @@ class messageController extends GetxController {
   /// Opens email client + sends SMS to emergency contacts simultaneously,
   /// sharing the user's current GPS location with an alert message.
   Future<void> shareLocationViaEmail(String alertTitle) async {
-    // Ask for SMS permission first
-    final smsPermission = await Permission.sms.request();
+    // Ask for SMS permission first (only on non-web)
+    PermissionStatus smsPermission = PermissionStatus.granted;
+    if (!kIsWeb) {
+      smsPermission = await Permission.sms.request();
+    }
 
     final hasLocation = await handleLocationPermission();
     if (!hasLocation) return;
